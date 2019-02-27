@@ -1,6 +1,5 @@
 const model = {
-  // We support returning promises.
-  getAccessToken: async function() {
+  getAccessToken: function() {
     return {
       accessTokenExpiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000),
       user: {
@@ -9,25 +8,25 @@ const model = {
     };
   },
 
-  // Or, calling a Node-style callback.
-  getAuthorizationCode: function(done) {
-    done(null, 'works!');
-  },
-
-  // Or, using generators.
-  getClient: function*() {
-    yield somethingAsync();
+  getAuthorizationCode: function() {
     return 'works!';
   },
+  /*
+  getClient: function() {
+  },
 
-  // Or, async/wait (using Babel).
-  getUser: async function() {
-    await somethingAsync();
-    return 'works!';
+  getUser: function() {
   }
+  */
 };
 
-const OAuth2Server = require('oauth2-server');
-let oauth = new OAuth2Server({model: model});
-
-module.exports = model;
+module.exports = new Proxy(model, {
+  get: (target, prop, receiver) => {
+    return (...argumentsList) => {
+      console.log(prop, argumentsList, '...');
+      const res = target[prop](...argumentsList);
+      console.log('=>', { res });
+      return res;
+    };
+  },
+});
